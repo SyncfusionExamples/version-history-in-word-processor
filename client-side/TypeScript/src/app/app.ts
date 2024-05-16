@@ -247,7 +247,7 @@ container.contentChange = (args: ContainerContentChangeEventArgs): void => {
       contentChanged = true;
       titleBar.saveOnClose = false;
       operations = [];
-      autoSaveDocument();
+      saveDocument();
       contentChanged = false;
     } else {
       //Save the document on closing the document irrespective of operations length.
@@ -259,7 +259,7 @@ container.contentChange = (args: ContainerContentChangeEventArgs): void => {
 //Auto save is triggered based on the timer, we used 15 seconds.
 setInterval(() => {
   if (contentChanged) {
-    autoSaveDocument();
+    saveDocument();
     contentChanged = false;
   }
 }, 15000);
@@ -290,7 +290,6 @@ function loadLatestVersion(name: string) {
   let responseData: any = {
     DocumentName: name,
   };
-  debugger;
   let baseUrl: string = url + 'LoadLatestVersionDocument';
   let httpRequest: XMLHttpRequest = new XMLHttpRequest();
   httpRequest.open('POST', baseUrl, true);
@@ -309,7 +308,6 @@ function loadLatestVersion(name: string) {
 }
 
 function compareSelected(args: NodeSelectEventArgs) {
-  debugger;
   if(!isNullOrUndefined(args.nodeData.parentID)){
   showSpinner(document.getElementById('main') as HTMLElement);
   if (downloadButton) {
@@ -421,7 +419,6 @@ function getVersionHistory(name: string) {
   let responseData: any = {
     DocumentName: name,
   };
-
   let baseUrl: string = url + 'GetVersionData';
   let httpRequest: XMLHttpRequest = new XMLHttpRequest();
   httpRequest.open('POST', baseUrl, true);
@@ -448,7 +445,7 @@ function getVersionHistory(name: string) {
   };
   httpRequest.send(JSON.stringify(<any>responseData));
 }
-function autoSaveDocument() {
+function saveDocument() {
   //You can save the document as below
   container.documentEditor.saveAsBlob('Docx').then((blob: Blob) => {
     let fileReader: any = new FileReader();
