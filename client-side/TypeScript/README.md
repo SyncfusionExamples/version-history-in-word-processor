@@ -1,12 +1,10 @@
-# How To Configure Version History in Client-side.
+# How to Configure Version History in Client-side.
 
 Please follow the below steps to configure the version history in client-side.
 
-## Configure version history
+1. Document opened in Document Editor can be saved in the following options.
 
-1. Document opened in Document Editor can be saved in the below options.
-
-   a. Save the document based on the number of content changes operation
+   a. Save the document based on the number of content changes operation.
    ```
    container.contentChange = (args: ContainerContentChangeEventArgs): void => {
      if (container.documentEditor.enableCollaborativeEditing) {
@@ -28,7 +26,7 @@ Please follow the below steps to configure the version history in client-side.
      }
    };
    ```
-   b. Save the document in periodic time interval.
+   b. Save the document at periodic time intervals.
     ```
     //Auto save is triggered based on the timer, we used 15 seconds.
     setInterval(() => {
@@ -76,7 +74,7 @@ Please follow the below steps to configure the version history in client-side.
     }
     ```
 
-2. Saved version history in the server is retrieved for displaying versions in the client-side.
+2. Saved version history in the server is retrieved for displaying versions on the client-side.
 
     ```
     function getVersionHistory(name: string) {
@@ -134,7 +132,7 @@ Please follow the below steps to configure the version history in client-side.
       httpRequest.send(JSON.stringify(<any>responseData));
     }
     ```
-4. Compare the selected version in the tree view with the previous version
+4. Compare the selected version in the tree view with the previous version.
     ```
     function compareSelected(args: NodeSelectEventArgs) {
       if(!isNullOrUndefined(args.nodeData.parentID)){

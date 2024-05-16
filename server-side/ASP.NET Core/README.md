@@ -51,7 +51,7 @@ public void AutoSave([FromBody] ExportData exportData)
 
 ## LoadLatestVersionDocument
 
-Retrieve the latest document version to open in client-side for editing.
+Retrieve the latest document version to open on client-side for editing.
 
 ```
 public string LoadLatestVersionDocument([FromBody] UploadDocument doc)
@@ -80,7 +80,7 @@ public string LoadLatestVersionDocument([FromBody] UploadDocument doc)
 
 ## GetVersionData
 
-Retrieve the saved document version from server-side for listing in the client-side.
+Retrieve the saved document version from server-side for listing on the client-side.
 ```
 public string GetVersionData([FromBody] UploadDocument doc)
 {
@@ -168,7 +168,7 @@ public string GetVersionData([FromBody] UploadDocument doc)
 ```
 
 ## CompareSelectedVersion
-Compare the selected revision with previous revision and show the changes are tracked content.
+Compare the selected revision with previous revision and show the changes in tracked content.
 ```
 public string CompareSelectedVersion([FromBody] CompareDocument doc)
 {
