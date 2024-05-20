@@ -371,7 +371,7 @@ namespace SyncfusionDocument.Controllers
         [Route("LoadLatestVersionDocument")]
         public string LoadLatestVersionDocument([FromBody] UploadDocument doc)
         {
-            string[] fileEntries = System.IO.Directory.GetFiles(("App_Data/" + doc.DocumentName), "*.docx");
+            string[] fileEntries = System.IO.Directory.GetFiles("App_Data/" + doc.DocumentName, "*.docx");
             DirectoryInfo directoryInfo = new DirectoryInfo("App_Data/" + doc.DocumentName);
 
             // Get all files in the directory
@@ -425,6 +425,7 @@ namespace SyncfusionDocument.Controllers
             public WordDocument Document { get; set; }
             public List<RootObject> Data { get; set; }
         }
+        //Compare the word document using DocIO https://help.syncfusion.com/file-formats/docio/word-document/compare-word-documents
         private WordDocument Compare(Version o, Version n)
         {
             using (FileStream originalDocumentStreamPath = new FileStream(o.FullName, FileMode.Open, FileAccess.Read))
@@ -534,8 +535,8 @@ namespace SyncfusionDocument.Controllers
         [Route("GetVersionData")]
         public string GetVersionData([FromBody] UploadDocument doc)
         {
-            string directoryPath = ("App_Data/" + doc.DocumentName);
-            string[] fileEntries = System.IO.Directory.GetFiles(("App_Data/" + doc.DocumentName), "*.docx");
+            string directoryPath = "App_Data/" + doc.DocumentName;
+            string[] fileEntries = System.IO.Directory.GetFiles("App_Data/" + doc.DocumentName, "*.docx");
             List<Version> versions = new List<Version>();
             // Check if the directory exists
             if (Directory.Exists(directoryPath))
@@ -653,7 +654,6 @@ namespace SyncfusionDocument.Controllers
 
             // Write the updated JSON data to the file
             System.IO.File.WriteAllText(jsonFilePath, updatedJson);
-
         }
         [AcceptVerbs("Post")]
         [HttpPost]

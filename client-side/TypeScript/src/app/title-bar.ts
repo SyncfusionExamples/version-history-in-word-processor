@@ -241,11 +241,11 @@ export class TitleBar {
   };
   private onClose = (): void => {
     if (!this.documentEditor.isReadOnly) {
-      this.autoSaveDocument();
+      this.saveDocument();
     }
     if (this.dialogComponent !== undefined) this.dialogComponent.hide();
   };
-  private autoSaveDocument(): void {
+  private saveDocument(): void {
     //You can save the document as below
     this.documentEditor.saveAsBlob('Docx').then((blob: Blob) => {
       if (this.saveOnClose) {
