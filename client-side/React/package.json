@@ -1,0 +1,45 @@
+{
+  "name": "ecydz5--run",
+  "version": "0.0.0",
+  "private": true,
+  "dependencies": {
+    "@microsoft/signalr": "^8.0.0",
+    "@syncfusion/ej2-base": "25.2.7",
+    "@syncfusion/ej2-buttons": "25.2.7",
+    "@syncfusion/ej2-documenteditor": "25.2.7",
+    "@syncfusion/ej2-grids": "25.2.7",
+    "@syncfusion/ej2-lists": "25.2.3",
+    "@syncfusion/ej2-navigations": "25.2.6",
+    "@syncfusion/ej2-popups": "25.2.7",
+    "@syncfusion/ej2-react-base": "25.2.6",
+    "@syncfusion/ej2-react-buttons": "25.2.7",
+    "@syncfusion/ej2-react-documenteditor": "^25.2.7",
+    "@syncfusion/ej2-react-grids": "25.2.7",
+    "@syncfusion/ej2-react-navigations": "^25.2.6",
+    "@syncfusion/ej2-react-popups": "25.2.7",
+    "@syncfusion/ej2-splitbuttons": "25.2.4",
+    "react": "18.1.0",
+    "react-dom": "18.1.0"
+  },
+  "scripts": {
+    "start": "react-scripts start",
+    "build": "react-scripts build",
+    "test": "react-scripts test --env=jsdom",
+    "eject": "react-scripts eject"
+  },
+  "devDependencies": {
+    "react-scripts": "latest"
+  },
+  "browserslist": {
+    "production": [
+      ">0.2%",
+      "not dead",
+      "not op_mini all"
+    ],
+    "development": [
+      "last 1 chrome version",
+      "last 1 firefox version",
+      "last 1 safari version"
+    ]
+  }
+}
