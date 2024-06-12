@@ -418,6 +418,23 @@ namespace SyncfusionDocument.Controllers
                 return json;
             }
         }
+        private static Stream getLatestFileStream(string filename)
+        {
+            string[] fileEntries = System.IO.Directory.GetFiles("App_Data/" + filename, "*.docx");
+            DirectoryInfo directoryInfo = new DirectoryInfo("App_Data/" + filename);
+
+            // Get all files in the directory
+            FileInfo[] files = directoryInfo.GetFiles();
+
+            // Get the last modified file
+            FileInfo lastModifiedFile = files
+                .OrderByDescending(f => f.LastWriteTime)
+                .FirstOrDefault();
+
+
+            Stream stream = System.IO.File.OpenRead(Path.Combine("App_Data", filename, lastModifiedFile.Name));
+            return stream;
+        }
         [HttpPost]
         [Route("UpdateAction")]
         [EnableCors("AllowAllOrigins")]
