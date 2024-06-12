@@ -329,19 +329,19 @@ const connectToRoom = (data) => {
       if (dictionary.hasOwnProperty(args.rowData.FileName)) {
         switch (currentDocument) {
           case 'Getting Started.docx':
-            loadLatestVersion(container.current.documentEditor.documentName);
+            loadLatestVersion(currentDocument);
             break;
           case 'Character Formatting.docx':
-            loadLatestVersion(container.current.documentEditor.documentName);
+            loadLatestVersion(currentDocument);
             break;
           case 'Paragraph Formatting.docx':
-            loadLatestVersion(container.current.documentEditor.documentName);
+            loadLatestVersion(currentDocument);
             break;
           case 'Styles.docx':
-            loadLatestVersion(container.current.documentEditor.documentName);
+            loadLatestVersion(currentDocument);
             break;
           case 'Web layout.docx':
-            loadLatestVersion(container.current.documentEditor.documentName);
+            loadLatestVersion(currentDocument);
             break;
         }
       }
@@ -366,19 +366,19 @@ const connectToRoom = (data) => {
       if (dictionary.hasOwnProperty(args.rowData.FileName)) {
         switch (currentDocument) {
           case 'Getting Started.docx':
-            loadLatestVersion(container.current.documentEditor.documentName);
+            loadLatestVersion(currentDocument);
             break;
           case 'Character Formatting.docx':
-            loadLatestVersion(container.current.documentEditor.documentName);
+            loadLatestVersion(currentDocument);
             break;
           case 'Paragraph Formatting.docx':
-            loadLatestVersion(container.current.documentEditor.documentName);
+            loadLatestVersion(currentDocument);
             break;
           case 'Styles.docx':
-            loadLatestVersion(container.current.documentEditor.documentName);
+            loadLatestVersion(currentDocument);
             break;
           case 'Web layout.docx':
-            loadLatestVersion(container.current.documentEditor.documentName);
+            loadLatestVersion(currentDocument);
             break;
         }
       }
