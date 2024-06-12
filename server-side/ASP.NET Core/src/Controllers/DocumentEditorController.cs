@@ -393,19 +393,7 @@ namespace SyncfusionDocument.Controllers
         public string   LoadLatestVersionDocument([FromBody] UploadDocument doc)
         {
             DocumentContent content = new DocumentContent();
-            string[] fileEntries = System.IO.Directory.GetFiles("App_Data/" + doc.fileName + ".docx", "*.docx");
-            DirectoryInfo directoryInfo = new DirectoryInfo("App_Data/" + doc.fileName + ".docx");
-
-            // Get all files in the directory
-            FileInfo[] files = directoryInfo.GetFiles();
-
-            // Get the last modified file
-            FileInfo lastModifiedFile = files
-                .OrderByDescending(f => f.LastWriteTime)
-                .FirstOrDefault();
-
-
-            Stream stream = System.IO.File.OpenRead(Path.Combine("App_Data", doc.fileName + ".docx", lastModifiedFile.Name));
+            Stream stream = getLatestFileStream(doc.fileName + ".docx");
             stream.Position = 0;
 
             WordDocument document = WordDocument.Load(stream, FormatType.Docx);            
@@ -425,8 +413,9 @@ namespace SyncfusionDocument.Controllers
             }
             else
             {
+                string json = Newtonsoft.Json.JsonConvert.SerializeObject(document);
                 document.Dispose();
-                return Newtonsoft.Json.JsonConvert.SerializeObject(document);
+                return json;
             }
         }
         [HttpPost]
@@ -752,18 +741,7 @@ namespace SyncfusionDocument.Controllers
                     outputdocName.Substring(index) : ".docx";
 
                     string[] fileEntries = System.IO.Directory.GetFiles("App_Data/" + outputdocName, "*.docx");
-                    DirectoryInfo directoryInfo = new DirectoryInfo("App_Data/" + outputdocName);
-
-                    // Get all files in the directory
-                    FileInfo[] files = directoryInfo.GetFiles();
-
-                    // Get the last modified file
-                    FileInfo lastModifiedFile = files
-                        .OrderByDescending(f => f.LastWriteTime)
-                        .FirstOrDefault();
-
-                    Stream stream1 = System.IO.File.OpenRead(Path.Combine("App_Data", outputdocName, lastModifiedFile.Name));
-
+                    Stream stream1 = getLatestFileStream(outputdocName);                   
                     Syncfusion.EJ2.DocumentEditor.WordDocument document = Syncfusion.EJ2.DocumentEditor.WordDocument.Load(stream1, GetFormatType(type));
                     stream1.Close();
                     CollaborativeEditingHandler handler = new CollaborativeEditingHandler(document);
@@ -778,8 +756,7 @@ namespace SyncfusionDocument.Controllers
                     stream.Position = 0;
                     byte[] data = stream.ToArray();
 
-                    string[] fileEntries1 = System.IO.Directory.GetFiles(Path.Combine("App_Data", outputdocName), "*.docx");
-                    string filePath = Path.Combine("App_Data", outputdocName, string.Format("v{0}.docx", (fileEntries.Length + 1)));
+                     string filePath = Path.Combine("App_Data", outputdocName, string.Format("v{0}.docx", (fileEntries.Length + 1)));
                     using (var fs = new FileStream(filePath, FileMode.Create, FileAccess.Write))
                     {
                         fs.Write(data, 0, data.Length);
