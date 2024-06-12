@@ -393,8 +393,8 @@ namespace SyncfusionDocument.Controllers
         public string   LoadLatestVersionDocument([FromBody] UploadDocument doc)
         {
             DocumentContent content = new DocumentContent();
-            string[] fileEntries = System.IO.Directory.GetFiles("App_Data/" + doc.fileName, "*.docx");
-            DirectoryInfo directoryInfo = new DirectoryInfo("App_Data/" + doc.fileName);
+            string[] fileEntries = System.IO.Directory.GetFiles("App_Data/" + doc.fileName + ".docx", "*.docx");
+            DirectoryInfo directoryInfo = new DirectoryInfo("App_Data/" + doc.fileName + ".docx");
 
             // Get all files in the directory
             FileInfo[] files = directoryInfo.GetFiles();
@@ -405,7 +405,7 @@ namespace SyncfusionDocument.Controllers
                 .FirstOrDefault();
 
 
-            Stream stream = System.IO.File.OpenRead(Path.Combine("App_Data", doc.fileName, lastModifiedFile.Name));
+            Stream stream = System.IO.File.OpenRead(Path.Combine("App_Data", doc.fileName + ".docx", lastModifiedFile.Name));
             stream.Position = 0;
 
             WordDocument document = WordDocument.Load(stream, FormatType.Docx);
@@ -746,10 +746,24 @@ namespace SyncfusionDocument.Controllers
                     }
                     //CollaborativeEditingHandler handler = new CollaborativeEditingHandler(GetDocumentFromDatabase(fileName, GetSelectedDocumentOwner(userId, fileName, connection)));
                     var currentDirectory = System.IO.Directory.GetCurrentDirectory();
-                    int index = fileName.LastIndexOf('.');
-                    string type = index > -1 && index < fileName.Length - 1 ?
-                    fileName.Substring(index) : ".docx";
-                    Stream stream1 = System.IO.File.Open(currentDirectory + "\\" + fileName, FileMode.Open, FileAccess.ReadWrite);
+                    var outputdocName = fileName + ".docx";
+                    int index = outputdocName.LastIndexOf('.');
+                    string type = index > -1 && index < outputdocName.Length - 1 ?
+                    outputdocName.Substring(index) : ".docx";
+
+                    string[] fileEntries = System.IO.Directory.GetFiles("App_Data/" + outputdocName, "*.docx");
+                    DirectoryInfo directoryInfo = new DirectoryInfo("App_Data/" + outputdocName);
+
+                    // Get all files in the directory
+                    FileInfo[] files = directoryInfo.GetFiles();
+
+                    // Get the last modified file
+                    FileInfo lastModifiedFile = files
+                        .OrderByDescending(f => f.LastWriteTime)
+                        .FirstOrDefault();
+
+                    Stream stream1 = System.IO.File.OpenRead(Path.Combine("App_Data", outputdocName, lastModifiedFile.Name));
+
                     Syncfusion.EJ2.DocumentEditor.WordDocument document = Syncfusion.EJ2.DocumentEditor.WordDocument.Load(stream1, GetFormatType(type));
                     stream1.Close();
                     CollaborativeEditingHandler handler = new CollaborativeEditingHandler(document);
@@ -763,7 +777,14 @@ namespace SyncfusionDocument.Controllers
                     doc.Save(stream, Syncfusion.DocIO.FormatType.Docx);
                     stream.Position = 0;
                     byte[] data = stream.ToArray();
-                    System.IO.File.WriteAllBytes(currentDirectory + "\\output.docx", data);
+
+                    string[] fileEntries1 = System.IO.Directory.GetFiles(Path.Combine("App_Data", outputdocName), "*.docx");
+                    string filePath = Path.Combine("App_Data", outputdocName, string.Format("v{0}.docx", (fileEntries.Length + 1)));
+                    using (var fs = new FileStream(filePath, FileMode.Create, FileAccess.Write))
+                    {
+                        fs.Write(data, 0, data.Length);
+                    }
+
                     stream.Close();
                     if (!partialSave)
                     {
