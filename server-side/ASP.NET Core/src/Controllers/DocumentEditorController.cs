@@ -408,8 +408,7 @@ namespace SyncfusionDocument.Controllers
             Stream stream = System.IO.File.OpenRead(Path.Combine("App_Data", doc.fileName + ".docx", lastModifiedFile.Name));
             stream.Position = 0;
 
-            WordDocument document = WordDocument.Load(stream, FormatType.Docx);
-            string json = Newtonsoft.Json.JsonConvert.SerializeObject(document);
+            WordDocument document = WordDocument.Load(stream, FormatType.Docx);            
             if (doc.documentOwner != null)
             {
                 int lastSyncedVersion = 0;
@@ -418,7 +417,8 @@ namespace SyncfusionDocument.Controllers
                 {
                     //Updated pending edit from database to source document.
                     document.UpdateActions(actions);
-                }                
+                }
+                string json = Newtonsoft.Json.JsonConvert.SerializeObject(document);
                 content.version = lastSyncedVersion;
                 content.sfdt = json;
                 return Newtonsoft.Json.JsonConvert.SerializeObject(content);
@@ -426,7 +426,7 @@ namespace SyncfusionDocument.Controllers
             else
             {
                 document.Dispose();
-                return json;
+                return Newtonsoft.Json.JsonConvert.SerializeObject(document);
             }
         }
         [HttpPost]
