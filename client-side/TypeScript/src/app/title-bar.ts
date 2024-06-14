@@ -1,5 +1,5 @@
 import { createElement, Event, KeyboardEventArgs } from '@syncfusion/ej2-base';
-import { DocumentEditor, FormatType } from '@syncfusion/ej2-documenteditor';
+import { ActionInfo,DocumentEditor, FormatType } from '@syncfusion/ej2-documenteditor';
 import { Button } from '@syncfusion/ej2-buttons';
 import { DropDownButton, ItemModel } from '@syncfusion/ej2-splitbuttons';
 import { MenuEventArgs } from '@syncfusion/ej2-navigations';
@@ -18,6 +18,8 @@ export class TitleBar {
   private open?: Button;
   private documentEditor: DocumentEditor;
   private isRtl?: boolean;
+  private userList?: HTMLElement;
+  public userMap: any = {};
   private dialogComponent?: Dialog;
   constructor(
     element: HTMLElement,
@@ -149,6 +151,43 @@ export class TitleBar {
         'Download a copy of this document to your computer as an SFDT file.'
       );
   }
+
+  public addUser(actionInfos: ActionInfo | ActionInfo[]): void {
+    if (!(actionInfos instanceof Array)) {
+        actionInfos = [actionInfos]
+    }
+    for (let i: number = 0; i < actionInfos.length; i++) {
+        let actionInfo: ActionInfo = actionInfos[i];
+        if (this.userMap[actionInfo.connectionId as string]) {
+            continue;
+        }
+        let avatar: HTMLElement = createElement('div', { className: 'e-avatar e-avatar-xsmall e-avatar-circle', styles: 'margin: 0px 5px', innerHTML: this.constructInitial(actionInfo.currentUser as string) });
+        if (this.userList) {
+            this.userList.appendChild(avatar);
+        }
+        this.userMap[actionInfo.connectionId as string] = avatar;
+    }
+}
+
+public removeUser(conectionId: string): void {
+    if (this.userMap[conectionId]) {
+        if (this.userList) {
+            this.userList.removeChild(this.userMap[conectionId]);
+        }
+        delete this.userMap[conectionId];
+    }
+}
+
+private constructInitial(authorName: string): string {
+    const splittedName: string[] = authorName.split(' ');
+    let initials: string = '';
+    for (let i: number = 0; i < splittedName.length; i++) {
+        if (splittedName[i].length > 0 && splittedName[i] !== '') {
+            initials += splittedName[i][0];
+        }
+    }
+    return initials;
+}
   private wireEvents = (): void => {
     (this.print as Button).element.addEventListener('click', this.onPrint);
     (this.close as Button).element.addEventListener('click', this.onClose);
