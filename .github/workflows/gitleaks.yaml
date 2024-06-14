@@ -30,9 +30,9 @@ jobs:
        with:
           dotnet-version: '3.1.x'
      - name: Install the report tool packages
-       if: steps.gitleaks.outcome != 'success'
+       if: steps.gitleaks.outputs.leaks != '0'
        run: |
            nuget install "Syncfusion.Email" -source ${{ secrets.NexusFeedLink }} -ExcludeVersion
            dir $GITHUB_WORKSPACE/Syncfusion.Email/lib/netcoreapp3.1
            dotnet $GITHUB_WORKSPACE/Syncfusion.Email/lib/netcoreapp3.1/GitleaksReportMail.dll ${{ secrets.CITEAMCREDENTIALS }} "$GITHUB_REF_NAME" ${{ secrets.NETWORKCREDENTIALS }} ${{ secrets.NETWORKKEY }} "$GITHUB_WORKSPACE" ${{ secrets.ORGANIZATIONNAME }}
-           
+           exit 1
