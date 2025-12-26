@@ -392,24 +392,11 @@ namespace SyncfusionDocument.Controllers
         [Route("LoadLatestVersionDocument")]
         public string   LoadLatestVersionDocument([FromBody] UploadDocument doc)
         {
-            DocumentContent content = new DocumentContent();
-            string[] fileEntries = System.IO.Directory.GetFiles("App_Data/" + doc.fileName, "*.docx");
-            DirectoryInfo directoryInfo = new DirectoryInfo("App_Data/" + doc.fileName);
-
-            // Get all files in the directory
-            FileInfo[] files = directoryInfo.GetFiles();
-
-            // Get the last modified file
-            FileInfo lastModifiedFile = files
-                .OrderByDescending(f => f.LastWriteTime)
-                .FirstOrDefault();
-
-
-            Stream stream = System.IO.File.OpenRead(Path.Combine("App_Data", doc.fileName, lastModifiedFile.Name));
+            DocumentContent content = new DocumentContent();           
+            Stream stream = getLatestFileStream(doc.fileName);
             stream.Position = 0;
 
-            WordDocument document = WordDocument.Load(stream, FormatType.Docx);
-            string json = Newtonsoft.Json.JsonConvert.SerializeObject(document);
+            WordDocument document = WordDocument.Load(stream, FormatType.Docx);            
             if (doc.documentOwner != null)
             {
                 int lastSyncedVersion = 0;
@@ -418,16 +405,33 @@ namespace SyncfusionDocument.Controllers
                 {
                     //Updated pending edit from database to source document.
                     document.UpdateActions(actions);
-                }                
+                }
+                string json = Newtonsoft.Json.JsonConvert.SerializeObject(document);
                 content.version = lastSyncedVersion;
                 content.sfdt = json;
+                document.Dispose();
                 return Newtonsoft.Json.JsonConvert.SerializeObject(content);
             }
             else
             {
+                string json = Newtonsoft.Json.JsonConvert.SerializeObject(document);
                 document.Dispose();
                 return json;
             }
+        }
+        private static Stream getLatestFileStream(string filename)
+        {
+            string[] fileEntries = System.IO.Directory.GetFiles("App_Data/" + filename, "*.docx");
+            DirectoryInfo directoryInfo = new DirectoryInfo("App_Data/" + filename);
+
+            // Get all files in the directory
+            FileInfo[] files = directoryInfo.GetFiles();
+
+            // Get the last modified file
+            FileInfo lastModifiedFile = files
+                .OrderByDescending(f => f.LastWriteTime)
+                .FirstOrDefault();
+           return System.IO.File.OpenRead(Path.Combine("App_Data", filename, lastModifiedFile.Name));
         }
         [HttpPost]
         [Route("UpdateAction")]
@@ -565,7 +569,7 @@ namespace SyncfusionDocument.Controllers
         {
             using (var connection = new SqlConnection(connectionString))
             {
-                var command = new SqlCommand($"SELECT CASE WHEN OBJECT_ID('{tableName}', 'U') IS NOT NULL THEN 1 ELSE 0 END", connection);
+                var command = new SqlCommand($"SELECT CASE WHEN OBJECT_ID('\"{tableName}\"', 'U') IS NOT NULL THEN 1 ELSE 0 END", connection);
                 connection.Open();
                 var result = (int)command.ExecuteScalar();               
                 return result == 1;
@@ -744,18 +748,19 @@ namespace SyncfusionDocument.Controllers
                             CollaborativeEditingHandler.TransformOperation(info, actions);
                         }
                     }
-                    //CollaborativeEditingHandler handler = new CollaborativeEditingHandler(GetDocumentFromDatabase(fileName, GetSelectedDocumentOwner(userId, fileName, connection)));
-                    var currentDirectory = System.IO.Directory.GetCurrentDirectory();
+                    
+                    string[] fileEntries = System.IO.Directory.GetFiles("App_Data/" + fileName, "*.docx");                  
+                    
                     int index = fileName.LastIndexOf('.');
                     string type = index > -1 && index < fileName.Length - 1 ?
-                    fileName.Substring(index) : ".docx";
-                    Stream stream1 = System.IO.File.Open(currentDirectory + "\\" + fileName, FileMode.Open, FileAccess.ReadWrite);
-                    Syncfusion.EJ2.DocumentEditor.WordDocument document = Syncfusion.EJ2.DocumentEditor.WordDocument.Load(stream1, GetFormatType(type));
-                    stream1.Close();
+                    fileName.Substring(index) : ".docx";               
+
+                    Stream latestFileStream = getLatestFileStream(fileName);                   
+                    Syncfusion.EJ2.DocumentEditor.WordDocument document = Syncfusion.EJ2.DocumentEditor.WordDocument.Load(latestFileStream, GetFormatType(type));
+                    latestFileStream.Close();
                     CollaborativeEditingHandler handler = new CollaborativeEditingHandler(document);
                     for (int i = 0; i < actions.Count; i++)
-                    {
-                        //Console.WriteLine(i);
+                    {                        
                         handler.UpdateAction(actions[i]);
                     }
                     MemoryStream stream = new MemoryStream();
@@ -763,7 +768,13 @@ namespace SyncfusionDocument.Controllers
                     doc.Save(stream, Syncfusion.DocIO.FormatType.Docx);
                     stream.Position = 0;
                     byte[] data = stream.ToArray();
-                    System.IO.File.WriteAllBytes(currentDirectory + "\\output.docx", data);
+
+                     string filePath = Path.Combine("App_Data", fileName, string.Format("v{0}.docx", (fileEntries.Length + 1)));
+                    using (var fs = new FileStream(filePath, FileMode.Create, FileAccess.Write))
+                    {
+                        fs.Write(data, 0, data.Length);
+                    }
+
                     stream.Close();
                     if (!partialSave)
                     {

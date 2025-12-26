@@ -14,8 +14,9 @@ import {
   Toolbar,
   ContainerContentChangeEventArgs,
   DocumentEditor,
-  ViewChangeEventArgs,
+  ViewChangeEventArgs, CollaborativeEditingHandler, Operation
 } from '@syncfusion/ej2-documenteditor';
+import { HubConnectionBuilder, HttpTransportType, HubConnectionState } from '@microsoft/signalr';
 import { Grid, Page, CommandColumn } from '@syncfusion/ej2-grids';
 import {
   ClickEventArgs,
@@ -119,14 +120,27 @@ let treeObj: TreeView = new TreeView({
 treeObj.appendTo('#tree');
 let hostUrl: string =
   'https://services.syncfusion.com/js/production/api/documenteditor/';
+
+//Collaborative editing controller url
+let serviceUrl = 'http://localhost:62869/';
+let collborativeEditingHandler: CollaborativeEditingHandler;
+let connectionId: string = "";
+let currentRoomName: string = '';
+
 let container: DocumentEditorContainer = new DocumentEditorContainer({
   height: '600px',
-  serviceUrl: hostUrl,
+  // serviceUrl: hostUrl,
   zIndex: 3000,
-  currentUser: 'Kesavan',
+  currentUser: 'Guest User',
 });
+container.serviceUrl = serviceUrl + 'api/documenteditor/';
 DocumentEditorContainer.Inject(Toolbar);
 container.appendTo('#container');
+//Injecting collaborative editing module
+DocumentEditor.Inject(CollaborativeEditingHandler);
+//Enable collaborative editing in DocumentEditor
+container.documentEditor.enableCollaborativeEditing = true;
+
 
 let documentEditor: DocumentEditor = new DocumentEditor({
   height: '550px',
@@ -139,7 +153,7 @@ documentEditor.appendTo('#documentEditor');
 
 let toolbarClick: any = function (args: ClickEventArgs) {
   let text = args.item.text;
-  switch (text) {    
+  switch (text) {
     case 'Edit Document':
       editorDialogObj.hide();
       loadLatestVersion(documentEditor.documentName + '.docx');
@@ -240,6 +254,21 @@ let operations: any = [];
 container.contentChange = (args: ContainerContentChangeEventArgs): void => {
   if (container.documentEditor.enableCollaborativeEditing) {
     //TODO add collaborative editing related code logic when enabling collaborative editing.
+    //Send the editing action to server
+    collborativeEditingHandler.sendActionToServer(args.operations as Operation[]);
+    operations.push(args.operations);
+    //Populate the operation upto 50 and auto save the version.
+    if (operations.length > 50) {
+      contentChanged = true;
+      titleBar.saveOnClose = false;
+      operations = [];
+      saveDocument();
+      contentChanged = false;
+    } else {
+      //Save the document on closing the document irrespective of operations length.
+      titleBar.saveOnClose = true;
+      contentChanged = false;
+    }
   } else {
     operations.push(args.operations);
     //Populate the operation upto 50 and auto save the version.
@@ -264,6 +293,64 @@ setInterval(() => {
   }
 }, 15000);
 
+// SignalR connection
+var connection = new HubConnectionBuilder().withUrl(serviceUrl + 'documenteditorhub', {
+  skipNegotiation: true,
+  transport: HttpTransportType.WebSockets
+}).withAutomaticReconnect().build();
+
+async function connectToRoom(data: any) {
+  try {
+    currentRoomName = data.roomName;
+    // start the connection.
+    connection.start().then(function () {
+      // Join the room.
+      connection.send('JoinGroup', { roomName: data.roomName, currentUser: data.currentUser });
+      console.log('server connected!!!');
+    });
+  } catch (err) {
+    console.log(err);
+    //Attempting to reconnect in 5 seconds
+    setTimeout(connectToRoom, 5000);
+  }
+};
+
+connection.onreconnected(() => {
+  if (currentRoomName != null) {
+    connection.send('JoinGroup', { roomName: currentRoomName, currentUser: container.currentUser });
+  }
+  console.log('server reconnected!!!');
+});
+
+//Event handler for signalR connection
+connection.on('dataReceived', onDataRecived.bind(this));
+
+
+function onDataRecived(action: string, data: any) {
+  if (collborativeEditingHandler) {    
+    if (action == 'connectionId') {
+      //Update the current connection id to track other users
+      connectionId = data;
+    } else if (connectionId != data.connectionId) {
+      if (action == 'action' || action == 'addUser') {
+        //Add the user to title bar when user joins the room
+        titleBar.addUser(data);
+      } else if (action == 'removeUser') {
+        //Remove the user from title bar when user leaves the room
+        titleBar.removeUser(data);
+      }
+    }
+    //Apply the remote action in DocumentEditor
+    collborativeEditingHandler.applyRemoteAction(action, data);
+  }
+}
+
+connection.onclose(async () => {
+  if (connection.state === HubConnectionState.Disconnected) {
+    alert('Connection lost. Please relod the browser to continue.');
+  }
+});
+
 documentEditor.viewChange = (args: ViewChangeEventArgs): void => {
   if (
     documentEditor.selection &&
@@ -286,10 +373,18 @@ function updatePageCount(): void {
     documentEditor.pageCount.toString();
 }
 
-function loadLatestVersion(name: string) {
-  let responseData: any = {
-    DocumentName: name,
-  };
+function loadLatestVersion(roomName: string) {
+  let responseData: any;
+  if (container.documentEditor.enableCollaborativeEditing) {
+    responseData = {
+      fileName: roomName,
+      documentOwner: "fc8094d67084488780c05965ab2f6d53",
+    };
+  } else {
+    responseData = {
+      fileName: roomName,
+    };
+  }
   let baseUrl: string = url + 'LoadLatestVersionDocument';
   let httpRequest: XMLHttpRequest = new XMLHttpRequest();
   httpRequest.open('POST', baseUrl, true);
@@ -300,7 +395,20 @@ function loadLatestVersion(name: string) {
   httpRequest.onreadystatechange = () => {
     if (httpRequest.readyState === 4) {
       if (httpRequest.status === 200 || httpRequest.status === 304) {
-        container.documentEditor.open(httpRequest.responseText);
+        if (container.documentEditor.enableCollaborativeEditing) {
+          let data = JSON.parse(httpRequest.responseText);
+          collborativeEditingHandler = container.documentEditor.collaborativeEditingHandlerModule;
+          //Update the room and version information to collaborative editing handler.
+           collborativeEditingHandler.updateRoomInfo(roomName, data.version, serviceUrl+ 'api/documenteditor/');          
+          container.documentEditor.open(data.sfdt);
+        }
+        else {
+          container.documentEditor.open(httpRequest.responseText);
+        }
+        setTimeout(function () {
+          // connect to server using signalR
+          connectToRoom({ action: 'connect', roomName: roomName, currentUser: container.currentUser });
+        });
       }
     }
   };
@@ -308,47 +416,49 @@ function loadLatestVersion(name: string) {
 }
 
 function compareSelected(args: NodeSelectEventArgs) {
-  if(!isNullOrUndefined(args.nodeData.parentID)){
-  showSpinner(document.getElementById('main') as HTMLElement);
-  if (downloadButton) {
-    (downloadButton as HTMLButtonElement).style.display = 'none';
-  }
-  let treeViewRowElement: HTMLElement = args.node.querySelector('.e-text-content') as HTMLElement;
-  // Get the button element
-  downloadButton = treeViewRowElement.querySelector('.download-button') as HTMLButtonElement;
-
-  // Set the 'display' property to 'none' to hide the button
-  (downloadButton as HTMLButtonElement).style.display = 'block';
-  downloadButton.addEventListener('click', () => {
-      showConfirmationDialog();
-  });
-  let responseData: any = {
-    DocumentName: container.documentEditor.documentName + '.docx',
-    SelectedVersion: treeObj.selectedNodes[0],
-  };
-
-  let baseUrl: string = url + 'CompareSelectedVersion';
-  let httpRequest: XMLHttpRequest = new XMLHttpRequest();
-  httpRequest.open('POST', baseUrl, true);
-  httpRequest.setRequestHeader(
-    'Content-Type',
-    'application/json;charset=UTF-8'
-  );
-  httpRequest.responseType = 'json';
-  httpRequest.onreadystatechange = () => {
-    if (httpRequest.readyState === 4) {
-      if (httpRequest.status === 200 || httpRequest.status === 304) {
-        documentEditor.open(httpRequest.response);
-        hideSpinner(document.getElementById('main') as HTMLElement);
-      } else {
-        hideSpinner(document.getElementById('main') as HTMLElement);
-      }
+  if (!isNullOrUndefined(args.nodeData.parentID)) {
+    showSpinner(document.getElementById('main') as HTMLElement);
+    if (downloadButton) {
+      (downloadButton as HTMLButtonElement).style.display = 'none';
     }
-  };
-  httpRequest.send(JSON.stringify(<any>responseData));
-}else{
-  treeObj.expandAll([args.node]);
-}
+    let treeViewRowElement: HTMLElement = args.node.querySelector('.e-text-content') as HTMLElement;
+    // Get the button element
+    downloadButton = treeViewRowElement.querySelector('.download-button') as HTMLButtonElement;
+
+    // Set the 'display' property to 'none' to hide the button
+    (downloadButton as HTMLButtonElement).style.display = 'block';
+    downloadButton.addEventListener('click', () => {
+      showConfirmationDialog();
+    });
+    let responseData: any = {
+      DocumentName: container.documentEditor.documentName + '.docx',
+      SelectedVersion: treeObj.selectedNodes[0],
+    };
+
+    let baseUrl: string = url + 'CompareSelectedVersion';
+    let httpRequest: XMLHttpRequest = new XMLHttpRequest();
+    httpRequest.open('POST', baseUrl, true);
+    httpRequest.setRequestHeader(
+      'Content-Type',
+      'application/json;charset=UTF-8'
+    );
+    httpRequest.responseType = 'json';
+    httpRequest.onreadystatechange = () => {
+      if (httpRequest.readyState === 4) {
+        if (httpRequest.status === 200 || httpRequest.status === 304) {
+         // documentEditor.open(httpRequest.response);
+          let response =JSON.parse(httpRequest.response.sfdt);
+          documentEditor.open(response); 
+          hideSpinner(document.getElementById('main') as HTMLElement);
+        } else {
+          hideSpinner(document.getElementById('main') as HTMLElement);
+        }
+      }
+    };
+    httpRequest.send(JSON.stringify(<any>responseData));
+  } else {
+    treeObj.expandAll([args.node]);
+  }
 }
 //  Initialize and render Confirm dialog with options
 function showConfirmationDialog(): void {
@@ -417,7 +527,7 @@ function downloadDocument() {
 function getVersionHistory(name: string) {
   showSpinner(document.getElementById('main') as HTMLElement);
   let responseData: any = {
-    DocumentName: name,
+    fileName: name,
   };
   let baseUrl: string = url + 'GetVersionData';
   let httpRequest: XMLHttpRequest = new XMLHttpRequest();

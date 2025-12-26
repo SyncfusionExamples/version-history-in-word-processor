@@ -22,7 +22,12 @@
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="SkiaSharp" Version="2.88.6" />
+	  <PackageReference Include="Microsoft.AspNetCore.SignalR.StackExchangeRedis" Version="6.0.21" />
+	  <PackageReference Include="Microsoft.Azure.SignalR" Version="1.21.5" />
+	  <PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer" Version="6.0.15" />
+
+
+	  <PackageReference Include="SkiaSharp" Version="2.88.6" />
     <PackageReference Include="Syncfusion.Compression.Net.Core" Version="*" />
     <PackageReference Include="Syncfusion.OfficeChart.Net.Core" Version="*" />
     <PackageReference Include="Syncfusion.EJ2.WordEditor.AspNet.Core" Version="*" />

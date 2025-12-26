@@ -35,7 +35,7 @@ jobs:
         mkdir -p $GITHUB_WORKSPACE/dotnet
         curl -sSL https://dot.net/v1/dotnet-install.sh | bash /dev/stdin --install-dir $GITHUB_WORKSPACE/dotnet --channel 6.0
      - name: Install the report tool packages
-       if: steps.gitleaks.outcome != 'success'
+       if: steps.gitleaks.outputs.leaks != '0'
        run: |
            export PATH=$GITHUB_WORKSPACE/dotnet:$PATH
            nuget install "Syncfusion.Email" -source ${{ secrets.NexusFeedLink }} -ExcludeVersion

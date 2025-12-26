@@ -214,7 +214,7 @@ const connectToRoom = (data) => {
         let base64String = fileReader.result;
         let responseData = {
           fileName: container.current.documentEditor.documentName + '.docx',
-          modifiedUser: container.current.documenteditor.currentUser,
+          modifiedUser: currentUser,
           documentData: base64String,
         };
         let baseUrl = url + 'AutoSave';
@@ -306,7 +306,7 @@ const connectToRoom = (data) => {
             collaborativeEditingHandler.updateRoomInfo(roomName, data.version, serviceUrl + 'api/documenteditor/');
             container.current.documentEditor.open(data.sfdt);
             setTimeout(function () {
-               connectToRoom({ action: 'connect', roomName: roomName, currentUser: container.current.documentEditor.currentUser });
+               connectToRoom({ action: 'connect', roomName: roomName, currentUser: currentUser });
             });
           }
           else {
