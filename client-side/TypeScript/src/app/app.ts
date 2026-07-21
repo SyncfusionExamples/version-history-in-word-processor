@@ -118,7 +118,7 @@ let treeObj: TreeView = new TreeView({
 });
 treeObj.appendTo('#tree');
 let hostUrl: string =
-  'https://services.syncfusion.com/js/production/api/documenteditor/';
+  'https://document.syncfusion.com/web-services/docx-editor/api/documenteditor/';
 let container: DocumentEditorContainer = new DocumentEditorContainer({
   height: '600px',
   serviceUrl: hostUrl,
