@@ -37,7 +37,7 @@ const DocumentList = () => {
   const [isGridOpen, setGridOpen] = useState(true);
   const [visible, setVisible] = useState(false);
   const [name, setName] = useState('');
-  let hostUrl = "https://services.syncfusion.com/react/production/api/documenteditor/";
+  let hostUrl = "https://document.syncfusion.com/web-services/docx-editor/api/documenteditor/";
   let container = useRef(null);
   let editorcontainer = useRef(null);
   let treeObj = useRef(null);
